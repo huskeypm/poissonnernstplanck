@@ -86,7 +86,9 @@ class top_boundary(SubDomain):
 	def inside(self,x,on_boundary):
 		return near(x[2],length+RevH) and on_boundary
 
-meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellA/UnitCellA.xml"
+#meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellA/UnitCellA.xml"
+# PKH 
+meshfile = "/net/share/shared/papers/nanoporous/meshes/UnitCellA.xml"
 mesh = Mesh(meshfile)
 subdomain = MeshFunction("size_t",mesh,2)
 subdomain.set_all(0)
