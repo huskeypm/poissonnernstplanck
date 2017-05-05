@@ -9,23 +9,24 @@ PKH copied over files from /home/AD/bsu233/labscripts/poissonnernstplanck
 ### What is this repository for? ###
 
 * Quick summary
+Code in support of nanoporous paper 
 * Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### How do I get set up? ###
 
 * Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+Compile .geo files
+gmsh -3 UnitCellA.geo 
+dolfin-convert UnitCellA.msh UnitCellB.xml 
 
-### Contribution guidelines ###
+* Sample run 
+mpirun -np 16 python KCl_CaCl_PNP.py 
 
-* Writing tests
-* Code review
-* Other guidelines
+
+* WARNING: 
+- Mesh files are hard-coded into the scripts
+- Note also that the lengths/etc attributes of the mesh are also hardcoded in the scripts
+
 
 ### Who do I talk to? ###
 

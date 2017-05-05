@@ -90,7 +90,9 @@ class top_boundary(SubDomain):
 	def inside(self,x,on_boundary):
 		return near(x[2],length+RevH) and on_boundary
 
-meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellB/UnitCellB.xml"
+#meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellB/UnitCellB.xml"
+# PKH
+meshfile = "/net//share/shared/papers/nanoporous/UnitCellB.xml"
 mesh = Mesh(meshfile)
 subdomain = MeshFunction("size_t",mesh,2)
 subdomain.set_all(0)
@@ -247,8 +249,9 @@ flux_top = assemble(dot(flux,n)*ds(2))
 avgf = flux_top/area
 Deff = avgf*(length + 2*RevH)/cca0/Dca
 
-print "Average Flux of Ca2+ is: ",flux_top/area
-print "Effective Diffusion constant is of Ca2+ is: ",Deff
+if MPI.rank(mpi_comm_world())==0:
+  print "Average Flux of Ca2+ is: ",flux_top/area
+  print "Effective Diffusion constant is of Ca2+ is: ",Deff
 
 V2file = File("flux.pvd")
 V2file << flux

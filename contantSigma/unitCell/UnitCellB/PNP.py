@@ -60,7 +60,9 @@ class top_boundary(SubDomain):
 	def inside(self,x,on_boundary):
 		return near(x[2],length+RevH) and on_boundary
 
-meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellB/UnitCellB.xml"
+#meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellB/UnitCellB.xml"
+# PKH
+meshfile = "/net//share/shared/papers/nanoporous/UnitCellB.xml"
 mesh = Mesh(meshfile)
 #mesh = UnitSquareMesh(400,400)
 #mesh.coordinates()[:] = mesh.coordinates()[:]*length
@@ -201,9 +203,10 @@ solver = NonlinearVariationalSolver(problem)
 solver.solve()
 
 c1,c2,c3,c4,v1 = u.split(True)
-print c3.vector()[100]
-print "--"
-print c1.vector()[100]
+if MPI.rank(mpi_comm_world())==0:
+  print c3.vector()[100]
+  print "--"
+  print c1.vector()[100]
 
 #  chh.assign(c3)
 

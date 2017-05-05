@@ -239,8 +239,9 @@ flux_top = assemble(dot(flux,n)*ds(2))
 avgf = flux_top/area
 Deff = avgf*(length + 2*RevH)/ck0/Dk
 
-print "Average Flux of K+ is",flux_top/area
-print "Effective Diffusion constant is",Deff
+if MPI.rank(mpi_comm_world())==0:
+  print "Average Flux of K+ is",flux_top/area
+  print "Effective Diffusion constant is",Deff
 
 V2file = File("flux.pvd")
 V2file << flux
