@@ -2,6 +2,10 @@
 
 Fenics-based poisson-nernst-planck solver
 
+
+5/5/17
+PKH copied over files from /home/AD/bsu233/labscripts/poissonnernstplanck
+
 ### What is this repository for? ###
 
 * Quick summary
