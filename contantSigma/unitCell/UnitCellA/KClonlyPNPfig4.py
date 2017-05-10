@@ -27,19 +27,19 @@ nm=1e-9
 spacing = 5.2*nm # the spacing between nanopores
 ########### SRB-Changed length from 90 to 34 
 length = 34*nm # length of nanopore   #SRB - changed for Fig 4
-radius = 5.4*nm # radius of nanopore
+radius = 5.1*nm # radius of nanopore
 
 RevL= spacing + 2*radius #length of reservoir
 RevH=20*nm # depth of reservoir
 #--------------------------------------------------
 sigmaS = -20e-3 #C/m^2  --- Surface charge density 
 cKCl = 100 #mol/m^3 == 1mM ----Bulk [KCl]
-#ck0 = cKCl #initial K+ concentration                SRB -moved to inside function to manipulate cKCl input
+#ck0 = cKCl #initial K+ concentration       SRB -moved to inside function to manipulate cKCl input
 #ccl0 = cKCl #initial Cl- concentration
 zk = 1 # K+ 
 zcl = -1 # Cl
 
-pH = 7
+pH = 7.5
 ch0 = 10**(-pH+3) #mol/m^3  initial [H]
 coh0 = 10**(-11+pH) #mol/m^3 inital [OH]
 
@@ -97,13 +97,14 @@ class top_boundary(SubDomain):
 		return near(x[2],length+RevH) and on_boundary
 
 
+
 def runPNP(
   spacing = 5.2*nm, # the spacing between nanopores
   length = 34*nm, # length of nanopore SRB changed fromn 90 to 34 to match fig 4
-  radius = 5.4*nm, # radius of nanopore
+  radius = 5.1*nm, # radius of nanopore
 #meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellA/UnitCellA.xml"
 # PKH 
-  meshfile = "/net/share/shared/papers/nanoporous/meshes/UnitCellA.xml",
+  meshfile = "/net/share/shared/papers/nanoporous/coolmeshes/UAL34R5-1.xml",
   cKCl = cKCl  
   ):
 
@@ -261,16 +262,16 @@ def runPNP(
   n=FacetNormal(mesh)
   #SRB adding print statement to check why area = 0 when L = 34nm to match fig 4A data
   # area is commented out to quiet down the mismatch for ds*n=0 where length=/= xml data
-  #area = assemble(Constant(1.0)*ds(2,domain=mesh))
-  #print area
+  area = assemble(Constant(1.0)*ds(2,domain=mesh))
+  print area
   flux_top = assemble(dot(flux,n)*ds(2))
-  #avgf = flux_top/area
-  #Deff = avgf*(length + 2*RevH)/ck0/Dk
+  avgf = flux_top/area
+  Deff = avgf*(length + 2*RevH)/ck0/Dk
   
-  #print "Average Flux of K+ is",flux_top/area
-  #print "Effective Diffusion constant is",Deff
-  I = (flux_top/1000)*F
-  G = I/phi0
+  print "Average Flux of K+ is", flux_top/area
+  print "Effective Diffusion constant is", Deff
+  I = (flux_top)*F
+  G = I/abs(phi0)
   
   print "In volts phi0 is ", phi0 
   print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I

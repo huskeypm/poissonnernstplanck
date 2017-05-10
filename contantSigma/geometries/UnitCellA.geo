@@ -56,7 +56,7 @@ Line(12) = {8,2};
 Line Loop(1) = {103,11,-203,2,303,5,-403,8};
 Plane Surface(1) = {1};
 Extrude{0,0,-RevH}{Line{1,2,3,4,5,6,7,8,9,10,11,12};};
-
+//Physical Surface(1) = {1};  //SRB
 Line Loop(100) = {404,408,412,416,420,424,428,432,436,440,444,448};
 Plane Surface(100) ={100};
 
@@ -79,7 +79,6 @@ NewSurf2[]=Translate{0,0,length+RevH}{ Duplicata{Surface{407,411,415,419,423,427
 NewSurf3[]=Translate{0,0,length+2*RevH}{ Duplicata{Surface{100};}};
 Surface Loop(4) = {485,502,519,468,520,529,534,539,544,549,554,559,564,569,574,579,584,586};
 Volume(10) = {4};
-
 //
 //No mesh refinement yet, need to do mesh refinement 
 
