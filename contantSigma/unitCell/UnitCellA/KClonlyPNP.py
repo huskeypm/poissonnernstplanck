@@ -19,30 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import math
-
-#parameters 
-#----------------Domain Size--------------
-
-nm=1e-9
-spacing = 5.2*nm # the spacing between nanopores
-########### SRB-Changed length from 90 to 34 
-length = 34*nm # length of nanopore   #SRB - changed for Fig 4
-radius = 5.4*nm # radius of nanopore
-
-RevL= spacing + 2*radius #length of reservoir
-RevH=20*nm # depth of reservoir
-#--------------------------------------------------
-sigmaS = -20e-3 #C/m^2  --- Surface charge density 
-cKCl = 100 #mol/m^3 == 1mM ----Bulk [KCl]
-#ck0 = cKCl #initial K+ concentration                SRB -moved to inside function to manipulate cKCl input
-#ccl0 = cKCl #initial Cl- concentration
-zk = 1 # K+ 
-zcl = -1 # Cl
-
-pH = 7
-ch0 = 10**(-pH+3) #mol/m^3  initial [H]
-coh0 = 10**(-11+pH) #mol/m^3 inital [OH]
-
+import cPickle as pickle
 Dk = 1.96e-9 # m^2/s --Diffusion constant for K+
 Dcl = 2.03e-9 # m^2/s  --Cl-
 zh=1
@@ -50,52 +27,20 @@ zoh=-1
 Dh=9.31e-9 # ---H+
 Doh=5.3e-9 # ---OH-
 
-#---------------------------
-# Basic constants
-#---------------------------
+  #---------------------------
+  # Basic constants
+  #---------------------------
 F = 96485.3365 # C/mol
 eps0 = 8.854187817e-12 # C/V-m
 epsr = 78.5
 kb = 1.380648e-23
 T = 298 #K
 charge = 1.60217e-19 #C --- electron charge
-#-----------------------------
-# TODO:apply a pH regulated surface charge density
-#pKa = 7 
-#pKb = 1.9
-#Gamma = 5e-6 #mol/m^2 
 
-#-- Boundary definition---
-class poresurface_for_one_pore(SubDomain):
-    def inside(self,x,on_boundary):
-        indomain_x = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS  #SRB - is this not indomain_z, checking to see if within "pore height"?
-        result = indomain_x and on_boundary
-        return result
 
-class poresurface_for_cellA(SubDomain):
-    def inside(self,x,on_boundary):
-        indomain_x = ((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2) <= (RevL/2)**2 + (RevL/2 - radius)**2
-        indomain_y = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS  #SRB y or z?
-        result = indomain_x and indomain_y and on_boundary
-        return result
- 
-class poresurface_for_cellB(SubDomain):
-    def inside(self,x,on_boundary):
-        indomain_x = x[0] > DOLFIN_EPS and x[0] < RevL - DOLFIN_EPS
-        indomain_y = x[1] > DOLFIN_EPS and x[1] < RevL - DOLFIN_EPS
-        #indomain_x = ((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2) <= (RevL/2)**2 + (radius)**2 
-        indomain_z = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS
-        result = indomain_x and indomain_y and indomain_z and on_boundary
-        return result
+nm=1e-9
 
-class bottom_boundary(SubDomain):
-    def inside(self,x,on_boundary):
-        return near(x[2],-RevH) and on_boundary
-
-class top_boundary(SubDomain):
-	def inside(self,x,on_boundary):
-		return near(x[2],length+RevH) and on_boundary
-
+cKCl = 100 #mol/m^3 == 1mM ----Bulk [KCl]
 
 def runPNP(
   spacing = 5.2*nm, # the spacing between nanopores
@@ -104,16 +49,81 @@ def runPNP(
 #meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellA/UnitCellA.xml"
 # PKH 
   meshfile = "/net/share/shared/papers/nanoporous/meshes/UnitCellA.xml",
-  cKCl = cKCl  
+  cKCl = cKCl,
+  pH = 7
   ):
 
-
+  spacing = spacing*nm
+  length = length*nm
+  radius = radius*nm
+  
 
   
   #Adding ability to change KCl concentration applied to the top for Figure 4
   ck0 = cKCl #initial K+ concentration
   ccl0 = cKCl #initial Cl- concentration
    
+
+
+  
+  ########### SRB-Changed length from 90 to 34 
+  
+  RevL= spacing + 2*radius #length of reservoir
+  RevH=20*nm # depth of reservoir
+  #--------------------------------------------------
+  sigmaS = -20e-3 #C/m^2  --- Surface charge density 
+  #ck0 = cKCl #initial K+ concentration                SRB -moved to inside function to manipulate cKCl input
+  #ccl0 = cKCl #initial Cl- concentration
+  zk = 1 # K+ 
+  zcl = -1 # Cl
+  
+  ch0 = 10**(-pH+3) #mol/m^3  initial [H]
+  coh0 = 10**(-11+pH) #mol/m^3 inital [OH]
+  #---------------------------
+  # TODO:apply a pH regulated surface charge density
+  #pKa = 7 
+  #pKb = 1.9
+  #Gamma = 5e-6 #mol/m^2 
+  
+  #-- Boundary definition---
+  class poresurface_for_one_pore(SubDomain):
+	  def inside(self,x,on_boundary):
+  		indomain_x = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS  #SRB - is this not indomain_z, checking to see if within "pore height"?
+  		result = indomain_x and on_boundary
+  		return result
+  
+  class poresurface_for_cellA(SubDomain):
+ 	 def inside(self,x,on_boundary):
+  		indomain_x = ((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2) <= (RevL/2)**2 + (RevL/2 - radius)**2
+  		indomain_y = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS  #SRB y or z?
+  		result = indomain_x and indomain_y and on_boundary
+  		return result
+  
+  class poresurface_for_cellB(SubDomain):
+ 	 def inside(self,x,on_boundary):
+  		indomain_x = x[0] > DOLFIN_EPS and x[0] < RevL - DOLFIN_EPS
+  		indomain_y = x[1] > DOLFIN_EPS and x[1] < RevL - DOLFIN_EPS
+  #indomain_x = ((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2) <= (RevL/2)**2 + (radius)**2 
+  		indomain_z = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS
+  		result = indomain_x and indomain_y and indomain_z and on_boundary
+ 		return result
+  class tubeTop(SubDomain):
+	def inside(self,x,on_boundary):
+		return near(x[2], length) and on_boundary
+
+  class tubeBottom(SubDomain):
+        def inside(self,x,on_boundary):
+                return near(x[2], 0) and on_boundary
+
+  class bottom_boundary(SubDomain):
+ 	 def inside(self,x,on_boundary):
+  		return near(x[2],-RevH) and on_boundary
+    
+  class top_boundary(SubDomain):
+  	def inside(self,x,on_boundary):
+  		return near(x[2],length+RevH) and on_boundary
+  
+  
   mesh = Mesh(meshfile)
   subdomain = MeshFunction("size_t",mesh,2)
   subdomain.set_all(0)
@@ -121,18 +131,22 @@ def runPNP(
   pore_S = poresurface_for_cellA()
   bottomboundary = bottom_boundary()
   topboundary = top_boundary()
-  
+  pore_Top = tubeTop()
+  pore_Bottom = tubeBottom()
   
   bottomboundary.mark(subdomain,1) #mark the boundary
   topboundary.mark(subdomain,2)
   pore_S.mark(subdomain,3)
-  
   
   # Mark Facet-- will be used for NeumannBC and normal flux calculations
   facet_domains = FacetFunction("size_t",mesh)
   facet_domains.set_all(0)
   bottomboundary.mark(facet_domains,1)
   topboundary.mark(facet_domains,2)
+ 
+  pore_Top.mark(facet_domains, 3)
+  pore_Bottom.mark(facet_domains, 4)
+  
   dS=Measure('dS',subdomain_data=facet_domains) # Exterior surface integration
   ds=Measure('ds',subdomain_data=facet_domains) # Interior surface integration
   
@@ -206,7 +220,7 @@ def runPNP(
   #--------Boundary Conditions--------------------------
   #-- Ground Potential at the two ends of reservoirs
   bc1 = DirichletBC(V.sub(4),0,subdomain,1)
-  bc2 = DirichletBC(V.sub(4),0,subdomain,2)
+  bc2 = DirichletBC(V.sub(4),.02,subdomain,2)
   
   #---------------------------------------
   # assigin boundary condition for K+ and Cl-
@@ -258,25 +272,79 @@ def runPNP(
   W = VectorFunctionSpace(mesh,'P',degree)
   flux = project(grad(ck_u)*Constant(Dk),W)
   
+  print "Degree of ck", degree
+  YY = v_u.function_space()
+  newDegree = YY.ufl_element().degree()
+  print "Degree of v_u =", newDegree
+  #VV = VectorFunctionSpace(mesh,'P',newDegree)
+  #vProfile = project(grad(v_u),VV)
+  #v_u.set_allow_extrapolation(True)
+   
+  R = radius/nm
+  """
+  rs = np.linspace(0.1,R,R*1000)
+  for i in range(int(R*1000)):
+    if i==0:
+	voltsTop= v_u(rs[i]*nm,rs[i]*nm,length)*(rs[i]*nm)**2*pi
+        voltsBottom=v_u(rs[i]*nm,rs[i]*nm,0)*(rs[i]*nm)**2*pi
+    else:
+        voltsTop+=v_u(rs[i]*nm,rs[i]*nm,length)*((nm*rs[i])**2 - (nm*rs[i-1])**2)*pi
+        voltsBottom+=v_u(rs[i]*nm,rs[i]*nm,0)*((nm*rs[i])**2 - (rs[i-1]*nm)**2)*pi
+
+  voltsTop /= pi*radius**2
+  voltsBottom /= pi*radius**2
+  """
+  
+  #voltsTop = u
+  #mwe = v_u(1e-9,1e-9,length)
+  #print " mwe = ", mwe
   n=FacetNormal(mesh)
   #SRB adding print statement to check why area = 0 when L = 34nm to match fig 4A data
   # area is commented out to quiet down the mismatch for ds*n=0 where length=/= xml data
-  #area = assemble(Constant(1.0)*ds(2,domain=mesh))
+  area = assemble(Constant(1.0)*ds(2,domain=mesh))
   #print area
+  newVTop = assemble(v_u*ds(3,domain=mesh))
+  newVBottom = assemble(v_u*ds(4,domain=mesh))
   flux_top = assemble(dot(flux,n)*ds(2))
-  #avgf = flux_top/area
-  #Deff = avgf*(length + 2*RevH)/ck0/Dk
+ 
+  flux_topP = assemble(dot(flux,n)*ds(3))
+ # print "Current top of pore:", flux_topP*F
+
+
+  flux_botP = assemble(dot(flux,n)*ds(4))
+  #print "Current bottom of pore:", flux_botP*F
   
-  #print "Average Flux of K+ is",flux_top/area
+
+
+  flux_midP = F*(flux_topP+flux_botP)
+  midI = flux_midP/2
+  #print "Current mid of pore:", midI
+
+ 
+  avgf = flux_top/area
+  Deff = avgf*(length + 2*RevH)/ck0/Dk
+  tubeArea = assemble(Constant(1.0)*ds(3,domain=mesh)) 
+  #vTop = assemble(dot(grad(v_u),n)*ds(3)) #assemble(dot(vProfile,n)*ds(3))
+  #vBottom =assemble(dot((v_u),n)*ds(4)) # assemble(dot(vProfile,n)*ds(4))
+  #print "vTop", newVTop
+ # print "vBot", newVBottom 
+ # print "Average Flux of K+ is",flux_top/area
   #print "Effective Diffusion constant is",Deff
-  I = (flux_top/1000)*F
-  G = I/phi0
+  I = (flux_top)*F
+  delVolts = (newVTop-newVBottom)/tubeArea
   
-  print "In volts phi0 is ", phi0 
-  print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
-  print "So G = I/V = ", G
+  G = midI/delVolts
+  #print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
+  #print "Voltage difference is", delVolts
+  #print "G = ", midI/delVolts, "S"
+  
   V2file = File("flux.pvd")
   V2file << flux
+  V2file = File("v.pvd")
+  V2file << v_u
+  
+  Results = { "Deff":"%s"%(str(Deff)),"G":"%s"%str(G)}
+  pickle.dump(Results, open("%s_%s_%s.p"%(str(R),str(length/nm),str(cKCl)),"wb"))
 
 #!/usr/bin/env python
 import sys
@@ -325,7 +393,12 @@ if __name__ == "__main__":
       quit()
     if(arg=="-run"):          
       arg1=np.float(sys.argv[i+1]) 
-      runPNP(spacing=arg1) 
+      arg2=np.float(sys.argv[i+2])
+      arg3=np.float(sys.argv[i+3])
+      arg4=sys.argv[i+4]
+      arg5=np.float(sys.argv[i+5])
+      arg6=np.float(sys.argv[i+6])
+      runPNP(spacing=arg1, length=arg2, radius=arg3, meshfile=arg4, cKCl=arg5, pH=arg6) 
       quit()  
     if(arg=="-runConcs"):
       arg1=np.float(sys.argv[i+1])

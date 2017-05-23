@@ -32,7 +32,10 @@ radius = 5.1*nm # radius of nanopore
 RevL= spacing + 2*radius #length of reservoir
 RevH=20*nm # depth of reservoir
 #--------------------------------------------------
+#sigmaS = -20e-3 #C/m^2  --- Surface charge density 
+
 sigmaS = -20e-3 #C/m^2  --- Surface charge density 
+
 cKCl = 100 #mol/m^3 == 1mM ----Bulk [KCl]
 #ck0 = cKCl #initial K+ concentration       SRB -moved to inside function to manipulate cKCl input
 #ccl0 = cKCl #initial Cl- concentration
@@ -40,8 +43,12 @@ zk = 1 # K+
 zcl = -1 # Cl
 
 pH = 7.5
-ch0 = 10**(-pH+3) #mol/m^3  initial [H]
+ch0 = 10**(-pH+3) #mol/m^3  initial [H]  # reckless changes incoming
 coh0 = 10**(-11+pH) #mol/m^3 inital [OH]
+
+
+#ch0 = 10**(-pH) #mol/m^3  initial [H]  # reckless changes incoming
+#coh0 = 10**(-14+pH) #mol/m^3 inital [OH]
 
 Dk = 1.96e-9 # m^2/s --Diffusion constant for K+
 Dcl = 2.03e-9 # m^2/s  --Cl-
@@ -87,7 +94,8 @@ class poresurface_for_cellB(SubDomain):
         indomain_z = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS
         result = indomain_x and indomain_y and indomain_z and on_boundary
         return result
-
+#class top_pore(SubDomain):
+     
 class bottom_boundary(SubDomain):
     def inside(self,x,on_boundary):
         return near(x[2],-RevH) and on_boundary
@@ -104,11 +112,11 @@ def runPNP(
   radius = 5.1*nm, # radius of nanopore
 #meshfile = "/home/AD/bsu233/labscripts/poissonnernstplanck/contantSigma/unitCell/UnitCellA/UnitCellA.xml"
 # PKH 
-  meshfile = "/net/share/shared/papers/nanoporous/coolmeshes/UAL34R5-1.xml",
+  meshfile = "/net/share/shared/papers/nanoporous/meshes/UAL34R5-1.xml",
   cKCl = cKCl  
   ):
 
-
+  
 
   
   #Adding ability to change KCl concentration applied to the top for Figure 4
@@ -207,11 +215,11 @@ def runPNP(
   #--------Boundary Conditions--------------------------
   #-- Ground Potential at the two ends of reservoirs
   bc1 = DirichletBC(V.sub(4),0,subdomain,1)
-  bc2 = DirichletBC(V.sub(4),0,subdomain,2)
+  bc2 = DirichletBC(V.sub(4),0.02,subdomain,2)
   
   #---------------------------------------
   # assigin boundary condition for K+ and Cl-
-  bc3 = DirichletBC(V.sub(0),0,subdomain,1) #----> Assign a 0 [K+] at the botton reservor
+  bc3 = DirichletBC(V.sub(0),ck0,subdomain,1) #----> Assign a 0 [K+] at the botton reservor
   bc4 = DirichletBC(V.sub(0),ck0,subdomain,2)
   bc5 = DirichletBC(V.sub(1),ccl0,subdomain,1)
   bc6 = DirichletBC(V.sub(1),ccl0,subdomain,2)
@@ -251,7 +259,8 @@ def runPNP(
   
   v1file = File("ck.pvd")
   v1file << ck_u
-  
+  voltsfile = File("v.pvd")
+  voltsfile << v_u
   # Measure [K+] flux at the reservoir boundary
   TT = ck_u.function_space()
   degree = TT.ufl_element().degree()
@@ -264,6 +273,7 @@ def runPNP(
   # area is commented out to quiet down the mismatch for ds*n=0 where length=/= xml data
   area = assemble(Constant(1.0)*ds(2,domain=mesh))
   print area
+  #vtopPore = 
   flux_top = assemble(dot(flux,n)*ds(2))
   avgf = flux_top/area
   Deff = avgf*(length + 2*RevH)/ck0/Dk
@@ -271,11 +281,9 @@ def runPNP(
   print "Average Flux of K+ is", flux_top/area
   print "Effective Diffusion constant is", Deff
   I = (flux_top)*F
-  G = I/abs(phi0)
   
   print "In volts phi0 is ", phi0 
   print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
-  print "So G = I/V = ", G
   V2file = File("flux.pvd")
   V2file << flux
 
