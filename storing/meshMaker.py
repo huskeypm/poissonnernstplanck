@@ -1,15 +1,21 @@
-//Unit Cell A Geometry
+spacing = "5.2e-9"
+radius  = "5.4e-9"
+length  = "90e-9"
+RevH = "20e-9"
+nm = "e-9"
+def makeMesh(spacing = spacing, radius = radius, length = length,fileName="test"):
+	entry = ""
+	#Add base parameters
+	entry+="spacing = %s;\n"%(spacing+nm)
+	entry+="length = %s;\n"%(length+nm)
+	entry+="radius = %s;\n"%(radius+nm)
+	entry+="RevL = %s+2*(%s);\n"%(spacing+nm,radius+nm)
+	entry+="RevH = %s;\n"%(RevH)
 
-// parameter 
-spacing=5.2e-9 ;
- 
-length = 30e-9 ; //length of nanopore 
-radius = 5.4e-9 ; //pore radius
-RevL = spacing + 2*radius ; //Reservoir width and length
-RevH = 20e-9 ; // Reservoir depth
 
 
 
+	entry+="""
 //parameter for nanopore
 
 lc = 1e-9 ;
@@ -56,7 +62,6 @@ Line(12) = {8,2};
 Line Loop(1) = {103,11,-203,2,303,5,-403,8};
 Plane Surface(1) = {1};
 Extrude{0,0,-RevH}{Line{1,2,3,4,5,6,7,8,9,10,11,12};};
-//Physical Surface(1) = {1};  //SRB
 Line Loop(100) = {404,408,412,416,420,424,428,432,436,440,444,448};
 Plane Surface(100) ={100};
 
@@ -70,6 +75,8 @@ Plane Surface(3) = {3};
 Plane Surface(4) = {4};
 Plane Surface(5) = {5};
 
+
+
 Surface Loop(1) = {100,407,411,415,419,423,427,431,435,439,443,447,451,1,2,3,4,5};
 Volume(1) = {1};
 
@@ -79,8 +86,17 @@ NewSurf2[]=Translate{0,0,length+RevH}{ Duplicata{Surface{407,411,415,419,423,427
 NewSurf3[]=Translate{0,0,length+2*RevH}{ Duplicata{Surface{100};}};
 Surface Loop(4) = {485,502,519,468,520,529,534,539,544,549,554,559,564,569,574,579,584,586};
 Volume(10) = {4};
+
+//Line Loop(200) = {453,454,455};
+//Line Loop(201) = {470,471,472};
+//Line Loop(202) = {487,488,489};
+//Line Loop(203) = {504,505,506};
+//Plane Surface(200) = {200};
+//Plane Surface(201) = {201};
+//Plane Surface(202) = {202};
+//Plane Surface(203) = {203};
 //
-//No mesh refinement yet, need to do mesh refinement 
+//No mesh refinement yet, need to do mesh refinement
 
 // Define Fields.... ?
 
@@ -134,3 +150,99 @@ Field[5].ZMin = length + RevH -2e-9;
 Field[6] = Min;
 Field[6].FieldsList = {2,4,5};
 Background Field = 6;
+                                                                                    148,7         Bot
+
+"""
+        fileLines = []
+
+	fileLines.append(entry) 
+	fileName = fileName+".geo"
+
+	with open(fileName, "w") as text_file:
+		for fileLine in fileLines:
+			text_file.write(fileLine)
+
+	import os
+	mshName = fileName.replace(".geo",".msh")
+	xmlName = fileName.replace(".geo",".xml")
+	line = "gmsh -3 %s"%fileName
+	os.system(line)
+	line="dolfin-convert %s %s"%(mshName,xmlName)
+	os.system(line)
+        print xmlName 
+	return xmlName
+#!/usr/bin/env python
+import sys
+#
+# Message printed when program run without arguments 
+#
+def helpmsg():
+  scriptName= sys.argv[0]
+  msg="""
+Purpose: 
+  Bin's mesh generator
+ 
+Usage:
+"""
+  msg+="to generate relevant xml provide a string with spacing,radius, and length in nm then string for fileName:python %s -makem spacing,radius,length,fileName" % (scriptName)
+  msg+="""
+  
+ 
+Notes:
+  Pay attention to the units in the input arguments!
+  Example: python meshMaker.py -makem "5.2,5.4,90,UAL90R5-4"
+ 
+
+"""
+  return msg
+
+
+if __name__ == "__main__":
+  import sys
+  import numpy as np
+  msg = helpmsg()
+  remap = "none"
+
+  if len(sys.argv) < 2:
+      raise RuntimeError(msg)
+
+  #fileIn= sys.argv[1]
+  #if(len(sys.argv)==3):
+  #  1
+  #  #print "arg"
+
+  # Loops over each argument in the command line 
+  for i,arg in enumerate(sys.argv):
+    # calls 'doit' with the next argument following the argument '-validation'
+    if(arg=="-makem"):
+      mystr = sys.argv[i+1]
+      myspl=mystr.split(',')
+      print myspl[0]
+      print myspl[1]
+      makeMesh(spacing=myspl[0],radius=myspl[1],length=myspl[2],fileName=myspl[3])
+      quit()
+  raise RuntimeError("Arguments not understood")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
