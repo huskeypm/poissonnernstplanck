@@ -1,3 +1,12 @@
+##################################
+#
+# Bin Sun's PNP solver-rama
+# 
+# Revisions
+#       10.08.10 inception
+#
+##################################
+
 #---------------------
 # For unit cell B 
 # Four ions are present: K Cl H OH
@@ -239,9 +248,67 @@ flux_top = assemble(dot(flux,n)*ds(2))
 avgf = flux_top/area
 Deff = avgf*(length + 2*RevH)/ck0/Dk
 
-if MPI.rank(mpi_comm_world())==0:
-  print "Average Flux of K+ is",flux_top/area
-  print "Effective Diffusion constant is",Deff
+print "Average Flux of K+ is",flux_top/area
+print "Effective Diffusion constant is",Deff
 
 V2file = File("flux.pvd")
 V2file << flux
+
+
+#
+# Message printed when program run without arguments 
+#
+def helpmsg():
+  scriptName= sys.argv[0]
+  msg="""
+Purpose: 
+  Bin's solver
+ 
+Usage:
+"""
+  msg+="mpirun -np #proc python  %s -validation" % (scriptName)
+  msg+="""
+  
+ 
+Notes:
+  Pay attention to the units in the input arguments!
+
+"""
+  return msg
+
+#
+# MAIN routine executed when launching this script from command line 
+#
+if __name__ == "__main__":
+  import sys
+  msg = helpmsg()
+  remap = "none"
+
+  if len(sys.argv) < 2:
+      raise RuntimeError(msg)
+
+  #fileIn= sys.argv[1]
+  #if(len(sys.argv)==3):
+  #  1
+  #  #print "arg"
+
+  # Loops over each argument in the command line 
+  for i,arg in enumerate(sys.argv):
+    # calls 'doit' with the next argument following the argument '-validation'
+    if(arg=="-validation"):
+      runPNP()
+    if(arg=="-run"):          
+      arg1=np.float(sys.argv[i+1]) 
+      runPNP(spacing=arg1) 
+  
+
+
+
+
+
+  raise RuntimeError("Arguments not understood")
+
+
+
+
+
