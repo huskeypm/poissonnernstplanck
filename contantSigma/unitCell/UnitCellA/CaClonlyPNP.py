@@ -326,13 +326,13 @@ def runPNP(
   
 
 
-  flux_midP = F*(flux_topP+flux_botP)
-  midI = flux_midP/2
+  flux_midP = (flux_topP+flux_botP)/2
+  midI = flux_midP*F
   #print "Current mid of pore:", midI
 
  
-  avgf = flux_top/area
-  Deff = avgf*(length + 2*RevH)/cca0/Dca
+  #avgf = flux_top/area
+  #Deff = avgf*(length + 2*RevH)/cca0/Dca
   tubeArea = assemble(Constant(1.0)*ds(3,domain=mesh)) 
   #vTop = assemble(dot(grad(v_u),n)*ds(3)) #assemble(dot(vProfile,n)*ds(3))
   #vBottom =assemble(dot((v_u),n)*ds(4)) # assemble(dot(vProfile,n)*ds(4))
@@ -342,7 +342,8 @@ def runPNP(
   #print "Effective Diffusion constant is",Deff
   I = (flux_top)*F
   delVolts = (newVTop-newVBottom)/tubeArea
-  
+  avgf = flux_midP/(tubeArea*length + RevH*(spacing+radius)**2)
+  Deff = avgf*(tubeArea)/cca0/Dca
   G = midI/delVolts
   #print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
   #print "Voltage difference is", delVolts

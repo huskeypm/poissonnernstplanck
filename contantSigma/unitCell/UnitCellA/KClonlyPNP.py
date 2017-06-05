@@ -63,10 +63,12 @@ def runPNP(
   cKCl = cKCl,
   pH = 7
   ):
-
-  spacing = spacing*nm
-  length = length*nm
-  radius = radius*nm
+  if spacing>1e-5:
+  	spacing = spacing*nm
+  if length>1e-5:
+  	length = length*nm
+  if radius>1e-5:
+	radius = radius*nm
   
 
   
@@ -75,9 +77,9 @@ def runPNP(
   ccl0 = cKCl #initial Cl- concentration
    
 
-bottomboundary.mark(subdomain,1) #mark the boundary
-topboundary.mark(subdomain,2)
-pore_S.mark(subdomain,3)
+ # bottomboundary.mark(subdomain,1) #mark the boundary
+  #topboundary.mark(subdomain,2)
+  #pore_S.mark(subdomain,3)
 
   
   ########### SRB-Changed length from 90 to 34 
@@ -326,8 +328,8 @@ pore_S.mark(subdomain,3)
 
 # assign initial values for v,ck,ccl
 # two ways to do that:
-u = Function(V)
-u.interpolate(Constant((ck0,ccl0,ch0,coh0,0)))
+  u = Function(V)
+  u.interpolate(Constant((ck0,ccl0,ch0,coh0,0)))
 
   flux_botP = assemble(dot(flux,n)*ds(4))
   #print "Current bottom of pore:", flux_botP*F
@@ -336,8 +338,8 @@ u.interpolate(Constant((ck0,ccl0,ch0,coh0,0)))
 # ccl0 = Function(newSpace)
 # ccl0.vector()[:] = ccl00*numpy.exp(-v0.vector()[:]/(kb*T))
 
-  flux_midP = F*(flux_topP+flux_botP)
-  midI = flux_midP/2
+  flux_midP = (flux_topP+flux_botP)/2
+  midI = flux_midP*F
   #print "Current mid of pore:", midI
 
  
@@ -352,7 +354,12 @@ u.interpolate(Constant((ck0,ccl0,ch0,coh0,0)))
   #print "Effective Diffusion constant is",Deff
   I = (flux_top)*F
   delVolts = (newVTop-newVBottom)/tubeArea
-  
+#  totalVol = assemble(Constant(1.0)*dx())
+  #avgf = flux_top/(tubeArea*length+(radius+spacing)**2)
+  #print "tubeArea ", tubeArea
+  #print "avgf ", avgf
+  #print "volume ", tubeArea*length+(radius+spacing)**2 
+  #Deff = avgf*(tubeArea)/ck0/Dk
   G = midI/delVolts
   #print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
   #print "Voltage difference is", delVolts
@@ -425,22 +432,26 @@ if __name__ == "__main__":
       runPNP(cKCl=arg1) #value provided is in mM = mol/m^3
       quit() 
 
-FF = aJm + aJp + aJh + aJoh + aPoissonL - aPoissonR
-J = derivative(FF, u)
+#F = aJm + aJp + aJh + aJoh + aPoissonL - aPoissonR
+# = derivative(FF, u)
 
 
 #--------Boundary Conditions--------------------------
 #-- Ground Potential at the two ends of reservoirs
-bc1 = DirichletBC(V.sub(4),0,subdomain,1)
-bc2 = DirichletBC(V.sub(4),0,subdomain,2)
+#bc1 = DirichletBC(V.sub(4),0,subdomain,1)
+#bc2 = DirichletBC(V.sub(4),0,subdomain,2)
 
   raise RuntimeError("Arguments not understood")
 
 # assign boundary condition for H+ and OH-
-bc7 = DirichletBC(V.sub(2),ch0,subdomain,1)
-bc8 = DirichletBC(V.sub(2),ch0,subdomain,2)
-bc9 = DirichletBC(V.sub(3),coh0,subdomain,1)
-bc10 = DirichletBC(V.sub(3),coh0,subdomain,2)
+#bc7 = DirichletBC(V.sub(2),ch0,subdomain,1)
+#bc8 = DirichletBC(V.sub(2),ch0,subdomain,2)
+#bc9 = DirichletBC(V.sub(3),coh0,subdomain,1)
+#bc10 = DirichletBC(V.sub(3),coh0,subdomain,2)
+
+
+"""
+
 
 # Now most important: Surface charge density at the nanopore surface
 #----------------------------------------------------------------
@@ -467,7 +478,26 @@ solver = NonlinearVariationalSolver(problem)
 #solver.parameters["newton_solver"]["preconditioner"] = "ilu"
 solver.solve()
 
-ck_u,ccl_u,ch_u,coh_u,v_u = u.split(True) 
+richletBC(V.sub(4),0,subdomain,2)
+
+  raise RuntimeError("Arguments not understood")
+
+# assign boundary condition for H+ and OH-
+bc7 = DirichletBC(V.sub(2),ch0,subdomain,1)
+bc8 = DirichletBC(V.sub(2),ch0,subdomain,2)
+bc9 = DirichletBC(V.sub(3),coh0,subdomain,1)
+bc10 = DirichletBC(V.sub(3),coh0,subdomain,2)
+
+# Now most important: Surface charge density at the nanopore surface
+#----------------------------------------------------------------
+# convert surface charge density to potential
+# use Grahame euqation
+#  sigma = sqrt(8*e0*er*kT)sinh(e*v0/2kT){[Na]inf + [Ca2+]_inf*(2+exp(-e*v0/kT)}^0.5
+# at 25^o (T = 298k) : sigma = 0.117*sqrt([NaCl])*sinh(v0/51.4)  ----for 1:1 electrolyte and [NaCl] is in M
+phi0 = math.asinh((sigmaS/(0.117*(ck0/1000)**0.5)))*51.4/1000
+bcx = DirichletBC(V.sub(4),Constant(phi0),subdomain,3) # electric potential on the surface of sphere
+
+
 
 v1file = File("ck.pvd")
 v1file << ck_u
@@ -491,3 +521,4 @@ if MPI.rank(mpi_comm_world())==0:
 
 V2file = File("flux.pvd")
 V2file << flux
+"""
