@@ -222,7 +222,7 @@ def runPNP(
   #--------Boundary Conditions--------------------------
   #-- Ground Potential at the two ends of reservoirs
   bc1 = DirichletBC(V.sub(4),0,subdomain,1)
-  bc2 = DirichletBC(V.sub(4),.02,subdomain,2)
+  bc2 = DirichletBC(V.sub(4),.02,subdomain,2) #currently testing conductance
   
   #---------------------------------------
   # assigin boundary condition for K+ and Cl-
@@ -342,8 +342,8 @@ def runPNP(
   #print "Effective Diffusion constant is",Deff
   I = (flux_top)*F
   delVolts = (newVTop-newVBottom)/tubeArea
-  avgf = flux_midP/(tubeArea*length + RevH*(spacing+radius)**2)
-  Deff = avgf*(tubeArea)/cca0/Dca
+  avgf = flux_top/(area)
+  Deff = avgf*(length+2*RevH)/cca0/Dca
   G = midI/delVolts
   #print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
   #print "Voltage difference is", delVolts

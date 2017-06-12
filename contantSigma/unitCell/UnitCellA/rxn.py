@@ -38,7 +38,7 @@ Dcl = 2.03e-9 # m^2/s  --Cl-
 #F = 96485.3365 # C/mol
 #eps0 = 8.854187817e-12 # C/V-m
 #epsr = 78.5
-koff = 1.380648e-23
+kb = 1.380648e-23
 T = 298 #K
 #charge = 1.60217e-19 #C --- electron charge
 cKCl = 0
@@ -56,7 +56,7 @@ def runPNP(
 # PKH 
   meshfile = "/net/share/shared/papers/nanoporous/meshes/UAL34R5-1.xml",
   cCaCl2 = cCaCl2,
-  Km = 6.5
+  Km = 8
   ):
 
   if radius>2e-7:
@@ -82,10 +82,10 @@ def runPNP(
   tubeWallArea = length*(2*radius*pi)
   bT = Gamma*tubeWallArea
   
-  cb0 = bT/10
+  #cb0 = bT/10
   Kd = (10**(-Km))
-  kon = 1
-  koff = Kd/kon
+  kon = 10e-4
+  koff = Kd*kon
   class poresurface_for_one_pore(SubDomain):
           def inside(self,x,on_boundary):
                 indomain_x = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS  #SRB - is this not indomain_z, checking to see if within "pore height"?
@@ -127,7 +127,10 @@ def runPNP(
           wall=near(((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2),(RevL/2)**2 + (RevL/2 - radius)**2)
           z = x[2] >= DOLFIN_EPS and x[2] <= length - DOLFIN_EPS
           return wall and z 
-
+  class outside(SubDomain):
+	def inside(self,x,on_boundary):
+	  z = (x[2] >= length +RevH+ DOLFIN_EPS) or (x[2]<DOLFIN_EPS)
+	  return z
   mesh = Mesh(meshfile)
   subdomain = MeshFunction("size_t",mesh,2)
   subdomain.set_all(0)
@@ -141,7 +144,7 @@ def runPNP(
   bottomboundary.mark(subdomain,1) #mark the boundary
   topboundary.mark(subdomain,2)
   pore_S.mark(subdomain,3)
-
+  notIn = outside()
   # Mark Facet-- will be used for NeumannBC and normal flux calculations
   facet_domains = FacetFunction("size_t",mesh)
   facet_domains.set_all(0)
@@ -154,7 +157,8 @@ def runPNP(
 
   poreWall = pore_wall()
   poreWall.mark(facet_domains,5)
-
+  
+  notIn.mark(facet_domains,6)
 
 
   dS=Measure('dS',subdomain_data=facet_domains) # Exterior surface integration
@@ -214,21 +218,21 @@ def runPNP(
         #):
 	
         values[1] = 0
-	values[2] = 0
+	v#alues[2] = 0
       elif (x[2]<(length+DOLFIN_EPS) and near(((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2),(RevL/2)**2 + (RevL/2 - radius)**2) and x[2]>(0-DOLFIN_EPS)):
         values[0] = 0         
         values[1] = 0
-	values[2] = Gamma
+	#values[2] = Gamma
       else:
 	values[0] = 0
 	values[1] = 0
-	values[2] = 0
+	#values[2] = 0
 
     
       #print x
       #print values[0]
     def value_shape(self):
-      return (3,)
+      return (2,)
   
   
   # Class for interfacing with the Newton solver
@@ -248,54 +252,54 @@ def runPNP(
   
   # Define mesh and function space 
 
-  mesh = Mesh(meshfile)
-  subdomain = MeshFunction("size_t",mesh,2)
-  subdomain.set_all(0)
+  #mesh = Mesh(meshfile)
+  #subdomain = MeshFunction("size_t",mesh,2)
+  #subdomain.set_all(0)
 
-  pore_S = poresurface_for_cellA()
-  bottomboundary = bottom_boundary()
-  topboundary = top_boundary()
-  pore_Top = tubeTop()
-  pore_Bottom = tubeBottom()
+  #pore_S = poresurface_for_cellA()
+  #bottomboundary = bottom_boundary()
+  #topboundary = top_boundary()
+  #pore_Top = tubeTop()
+  #pore_Bottom = tubeBottom()
 
-  bottomboundary.mark(subdomain,1) #mark the boundary
-  topboundary.mark(subdomain,2)
-  pore_S.mark(subdomain,3)
+  #bottomboundary.mark(subdomain,1) #mark the boundary
+  #topboundary.mark(subdomain,2)
+  #pore_S.mark(subdomain,3)
 
   # Mark Facet-- will be used for NeumannBC and normal flux calculations
-  facet_domains = FacetFunction("size_t",mesh)
-  facet_domains.set_all(0)
-  bottomboundary.mark(facet_domains,1)
-  topboundary.mark(facet_domains,2)
+  #facet_domains = FacetFunction("size_t",mesh)
+  #facet_domains.set_all(0)
+  #bottomboundary.mark(facet_domains,1)
+  #topboundary.mark(facet_domains,2)
 
-  pore_Top.mark(facet_domains, 3)
-  pore_Bottom.mark(facet_domains, 4)
+  #pore_Top.mark(facet_domains, 3)
+  #pore_Bottom.mark(facet_domains, 4)
 
-  dS=Measure('dS',subdomain_data=facet_domains) # Exterior surface integration
-  ds=Measure('ds',subdomain_data=facet_domains) # Interior surface integration
+  #dS=Measure('dS',subdomain_data=facet_domains) # Exterior surface integration
+  #ds=Measure('ds',subdomain_data=facet_domains) # Interior surface integration
 
 
   #efine MixedFunctionSpace--
   #--- for dolfin 1.6.0 (grimm)
   P1 = FunctionSpace(mesh,"CG",1)
   P2 = FunctionSpace(mesh,"CG",1)
-  P3 = FunctionSpace(mesh,"CG",1)
+  #P3 = FunctionSpace(mesh,"CG",1)
   #P4 = FunctionSpace(mesh,"CG",1)
   #P5 = FunctionSpace(mesh,"CG",1)
-  V = MixedFunctionSpace([P1,P2,P3])#,P4,P5])
+  V = MixedFunctionSpace([P1,P2])#,P4,P5])
   
 
   du = TrialFunction(V)
-  q,v, Help  = TestFunctions(V)  # I dont know what to do with test function for unoccupied sites on the wall
+  q,v  = TestFunctions(V)  # I dont know what to do with test function for unoccupied sites on the wall
 
 
 
   u = Function(V) # current soln
   u0 = Function(V)
   # split mixed functions
-  c,cb,gamma = split(u)
-  c0,cb0,gamma0 = split(u0)
-  ccam,ccbp,gammaP = TestFunctions(V)
+  c,cb = split(u)
+  c0,cb0 = split(u0)
+  ccam,ccbp = TestFunctions(V)
   #c0,cb0 = split(u0)
   
   #u.interpolate(Constant((cca0,0)))
@@ -311,7 +315,7 @@ def runPNP(
    
   bc1 = DirichletBC(V.sub(0),0,subdomain,1) #----> Assign a 0 [K+] at the botton reservor
   bc2 = DirichletBC(V.sub(0),cca0,subdomain,2)
-  bc3 = DirichletBC(V.sub(2),Gamma,subdomain,3)
+  bc3 = DirichletBC(V.sub(1),0,facet_domains,6)
   ## Weak Ls for RHS  
   # See notetaker 121213 notes for details 
   bcs = [bc1,bc2,bc3] 
@@ -320,12 +324,12 @@ def runPNP(
   #  RHS1 = -Dij*inner(grad(c),grad(q))*dx  
   #  RHS2 = -Dij*inner(grad(cb),grad(v))*dx 
   #else:
-  RHS1 = inner(Dij*grad(c),grad(q))*dx  #only considering grad(c) not grad(cb) b/c grad(cb) is bound to wall
+  #RHS1 = inner(Dca*grad(c),grad(q))*dx  #only considering grad(c) not grad(cb) b/c grad(cb) is bound to wall
   #RHS2 = -inner(Dij*grad(cb),grad(v))*dx 
-  RHS1 += -(kon*-c*q*(bT-cb)*(gamma-cb/tubeWallArea))*v*ds # add in rxn rates 
-  RHS1 = koff*cb*q*ds 					  # rxn rates so KD does somwthing
-  RHS2 = c*(gamma-cb/Constant(tubeWallArea))*v*ds - (-koff)*cb*v*ds
-  L = RHS1 + RHS2
+  #RHS1 += -(kon)*-c*q*(gamma-cb/tubeWallArea)*ds # add in rxn rates 
+  #RHS1 += koff*cb*q*ds 					  # rxn rates so KD does somwthing
+  #RHS2 = kon*c*(gamma-cb/Constant(tubeWallArea))*v*ds - (koff)*cb*v*ds
+  #L = RHS1 + RHS2
   # Reaction: b + c --kon--> cb,  
   #           b + c <-koff--- cb
   #R = np.array([
@@ -333,6 +337,19 @@ def runPNP(
     #[kon,-koff]      # p
     #])
   
+
+  
+  RHS1 = -inner(Dca*grad(c),grad(q))*dx  #only considering grad(c) not grad(cb) b/c grad(cb) is bound to wall
+  #RHS2 = -inner(Dij*grad(cb),grad(v))*dx 
+  LHS1 = (Kd)*c*q*(bT-cb)*ds # add in rxn rates 
+  LHS1 += -Kd*c*(bT-cb)*v*ds 					  # rxn rates so KD does somwthing
+  LHS1 += Kd*(cb)*v*ds
+  L = RHS1 + LHS1
+  # Reaction: b + c --kon--> cb,  
+
+
+
+
   
   # operator splitting 
   #opSplit=False
@@ -360,44 +377,110 @@ def runPNP(
 
   # Compute directional derivative about u in the direction of du (Jacobian)
   # (for Newton iterations) 
-  a = derivative(L, u, du)
   
+  cca_u, ccab_u = u.split(True)
+
+  v1file = File("cca.pvd")
+  v1file << cca_u
+
+  # Measure [Ca+] flux at the reservoir boundary
+  TT = cca_u.function_space()
+  degree = TT.ufl_element().degree()
+  # define new functionspace to store flux
+  W = VectorFunctionSpace(mesh,'P',degree)
+  flux = project(grad(cca_u)*Constant(Dca),W)
+
+
+
+
+
+
+
+
+
+
+ 
+  a = derivative(L, u, du)
+  problem = NonlinearVariationalProblem(L, u, bcs=bcs, J=a)
+  solver = NonlinearVariationalSolver(problem)
+  solver.solve()
   
   # Create nonlinear problem and Newton solver
-  problem = MyEqn(a, L)
-  solver = NewtonSolver("lu")
-  solver.parameters["convergence_criterion"] = "incremental"
-  solver.parameters["relative_tolerance"] = 1e-6
+  #problem = MyEqn(a, L)
+  #solver = NewtonSolver("lu")
+  #solver.parameters["convergence_criterion"] = "incremental"
+  #solver.parameters["relative_tolerance"] = 1e-6
   
+
+  
+
+
+
   # Output file
   file = File("output.pvd", "compressed")
-  
+  dt = .1 
   # Step in time
   t = 0.0
-  T = 25*dt
+  T = 25
+  #T = 25*dt
   while (t < T):
       t += dt
       u0.vector()[:] = u.vector()
-      solver.solve(problem, u.vector())
+      solver.solve()
   
       #if(opSplit==True):
         # Check Johans 121213/4 email regarding using dof maps and sympy functions here 
         
         
       #file << (u.split()[0], t)
-      file << (u,t)
+#      file << (u,t)
   
       # check values
-      for i,ele in enumerate(split(u)):
-        tot = assemble(ele*dx,mesh=mesh)
-        vol = assemble(Constant(1.)*dx,mesh=mesh)
-        print "Conc(%d) %f " % (i,tot/vol)
+#      for i,ele in enumerate(split(u)):
+ #       tot = assemble(ele*dx,mesh=mesh)
+  #      vol = assemble(Constant(1.)*dx,mesh=mesh)
+   #     print "Conc(%d) %f " % (i,tot/vol)
   
   #roblem = NonlinearVariationalProblem(L, u, bcs=bcs,J=J)
   #olver = NonlinearVariationalSolver(problem)
   #solver.parameters["newton_solver"]["linear_solver"] = "gmres"
   #solver.parameters["newton_solver"]["preconditioner"] = "ilu"
   #olver.solve()
+
+
+  n=FacetNormal(mesh)
+  area = assemble(Constant(1.0)*ds(2,domain=mesh))
+  #newVTop = assemble(v_u*ds(3,domain=mesh))
+  #newVBottom = assemble(v_u*ds(4,domain=mesh))
+  flux_top = assemble(dot(flux,n)*ds(2))
+
+  flux_topP = assemble(dot(flux,n)*ds(3))
+
+  flux_botP = assemble(dot(flux,n)*ds(4))
+
+
+
+  #flux_midP = (flux_topP+flux_botP)/2
+  #midI = flux_midP*F
+  #print "Current mid of pore:", midI
+
+  R = radius/nm
+
+  tubeArea = assemble(Constant(1.0)*ds(3,domain=mesh))
+  #vTop = assemble(dot(grad(v_u),n)*ds(3)) #assemble(dot(vProfile,n)*ds(3))
+  #vBottom =assemble(dot((v_u),n)*ds(4)) # assemble(dot(vProfile,n)*ds(4))
+  #I = (flux_top)*F
+  #delVolts = (newVTop-newVBottom)/tubeArea
+  avgf = flux_top/(area)
+  Deff = avgf*(length+2*RevH)/cca0/Dca
+  #G = midI/delVolts
+  
+  V2file = File("flux.pvd")
+  V2file << flux
+
+  Results = { "Deff":"%s"%(str(Deff))}#,"G":"%s"%str(G)}
+  pickle.dump(Results, open("Ca_%s_%s_%s_%s.p"%(str(R),str(length/nm),str(cCaCl2),str(Km)),"wb"))
+
 
 
   
