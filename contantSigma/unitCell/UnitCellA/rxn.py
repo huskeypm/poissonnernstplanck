@@ -56,7 +56,7 @@ def runPNP(
 # PKH 
   meshfile = "/net/share/shared/papers/nanoporous/meshes/UAL34R5-1.xml",
   cCaCl2 = cCaCl2,
-  Km = 8
+  Km = 3.5
   ):
 
   if radius>2e-7:
@@ -84,7 +84,7 @@ def runPNP(
   
   #cb0 = bT/10
   Kd = (10**(-Km))
-  kon = 10e-4
+  kon = 10e-6
   koff = Kd*kon
   class poresurface_for_one_pore(SubDomain):
           def inside(self,x,on_boundary):
@@ -218,7 +218,7 @@ def runPNP(
         #):
 	
         values[1] = 0
-	v#alues[2] = 0
+	#values[2] = 0
       elif (x[2]<(length+DOLFIN_EPS) and near(((x[0] - RevL/2)**2 + (x[1] - RevL/2)**2),(RevL/2)**2 + (RevL/2 - radius)**2) and x[2]>(0-DOLFIN_EPS)):
         values[0] = 0         
         values[1] = 0
@@ -289,8 +289,8 @@ def runPNP(
   V = MixedFunctionSpace([P1,P2])#,P4,P5])
   
 
-  du = TrialFunction(V)
-  q,v  = TestFunctions(V)  # I dont know what to do with test function for unoccupied sites on the wall
+  #du = TrialFunction(V)
+  #q,v  = TestFunctions(V)  # I dont know what to do with test function for unoccupied sites on the wall
 
 
 
@@ -339,18 +339,23 @@ def runPNP(
   
 
   
-  RHS1 = -inner(Dca*grad(c),grad(q))*dx  #only considering grad(c) not grad(cb) b/c grad(cb) is bound to wall
-  #RHS2 = -inner(Dij*grad(cb),grad(v))*dx 
-  LHS1 = (Kd)*c*q*(bT-cb)*ds # add in rxn rates 
-  LHS1 += -Kd*c*(bT-cb)*v*ds 					  # rxn rates so KD does somwthing
-  LHS1 += Kd*(cb)*v*ds
-  L = RHS1 + LHS1
+  RHS1 = -inner(Dca*grad(c),grad(ccam))*dx  #only considering grad(c) not grad(cb) b/c grad(cb) is bound to wall
+  #RHS2 = -inner(Dij*grad(cb),grad(ccbp))*dx 
+  LHS1 = (kon)*c*ccam*(bT-cb)*ccbp*ds(6)#facet_domains,6) # add in rxn rates 
+  LHS1 += -kon*c*(bT-cb)*ccbp*ds(6)#facet_domains,6) 					  # rxn rates so KD does somwthing
+  LHS2 = koff*(cb)*ccam*ds(6)#facet_domains,6)
+  LHS2 = koff*cb*ccbp*ds(6)#facet_domains,6)
+  L = RHS1 + LHS1 +LHS2
   # Reaction: b + c --kon--> cb,  
 
 
 
 
-  
+  a = derivative(L, u)#, du)
+  problem = NonlinearVariationalProblem(L, u, bcs=bcs, J=a)
+  solver = NonlinearVariationalSolver(problem)
+  solver.solve()
+ 
   # operator splitting 
   #opSplit=False
   #if(opSplit==False):
@@ -391,20 +396,6 @@ def runPNP(
   flux = project(grad(cca_u)*Constant(Dca),W)
 
 
-
-
-
-
-
-
-
-
- 
-  a = derivative(L, u, du)
-  problem = NonlinearVariationalProblem(L, u, bcs=bcs, J=a)
-  solver = NonlinearVariationalSolver(problem)
-  solver.solve()
-  
   # Create nonlinear problem and Newton solver
   #problem = MyEqn(a, L)
   #solver = NewtonSolver("lu")
