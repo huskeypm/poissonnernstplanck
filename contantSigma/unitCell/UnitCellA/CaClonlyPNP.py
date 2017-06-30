@@ -317,13 +317,25 @@ def runPNP(
   newVBottom = assemble(v_u*ds(4,domain=mesh))
   flux_top = assemble(dot(flux,n)*ds(2))
  
-  flux_topP = assemble(dot(flux,n)*ds(3))
+#  flux_topP = assemble(dot(flux,n)*ds(3))
  # print "Current top of pore:", flux_topP*F
 
 
-  flux_botP = assemble(dot(flux,n)*ds(4))
+ # flux_botP = assemble(dot(flux,n)*ds(4))
   #print "Current bottom of pore:", flux_botP*F
   
+
+  flux_topI = assemble(dot(flux,n)*ds(3))-assemble(dot(fluxCl,n)*ds(3))+assemble(dot(fluxH,n)*ds(3))-assemble(dot(fluxOh,n)*ds(3))
+
+  print "Current top of pore:", flux_topI*F
+  flux_botI = assemble(dot(flux,n)*ds(4))-assemble(dot(fluxCl,n)*ds(4))+assemble(dot(fluxH,n)*ds(4))-assemble(dot(fluxOh,n)*ds(4))
+
+  print "Current bottom of pore:", flux_botI*F
+  I = (flux_topI+flux_botI)/2*F
+
+
+
+
 
 
   flux_midP = (flux_topP+flux_botP)/2
@@ -340,11 +352,10 @@ def runPNP(
  # print "vBot", newVBottom 
  # print "Average Flux of K+ is",flux_top/area
   #print "Effective Diffusion constant is",Deff
-  I = (flux_top)*F
   delVolts = (newVTop-newVBottom)/tubeArea
   avgf = flux_top/(area)
   Deff = avgf*(length+2*RevH)/cca0/Dca
-  G = midI/delVolts
+  G =I/delVolts
   #print "I is K+ * F = ", I #this should be mmol/s of K+ * F to get C/s for I
   #print "Voltage difference is", delVolts
   #print "G = ", midI/delVolts, "S"
