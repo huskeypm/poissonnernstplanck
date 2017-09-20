@@ -8,8 +8,8 @@ RevH = 20e-9;
 length = 90e-9;
 
 
-lc = 1.00e-9 ;
-lc2 = 2.0e-9;
+lc = 2.5e-9 ;
+lc2 = 5e-9;
 
 Point(1) = { 0,0,0,lc};
 Point(2) = { RevL,0,0,lc};
