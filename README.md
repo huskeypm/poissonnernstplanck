@@ -27,6 +27,9 @@ mpirun -np 16 python KCl_CaCl_PNP.py
 - Mesh files are hard-coded into the scripts
 - Note also that the lengths/etc attributes of the mesh are also hardcoded in the scripts
 
+* Computer vision/matched filering techniques 
+- are available on bitbucket: https://bitbucket.org/pkhlab/gpu_detect
+
 
 ### Who do I talk to? ###
 
