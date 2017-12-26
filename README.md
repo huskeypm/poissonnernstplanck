@@ -14,18 +14,11 @@ Bin Sun added necessary files to reproduce data in the PNP paper
 * Quick summary
 Code in support of nanoporous paper
 
-Two main directories are "Geometries" and "fenics_scripts".
+1) KClonlyPNP.py is used to calculate the KCl ionic conductance in a 3D single nanopre. The corresponding .geo file is "3D_pore.geo" in "Geometries" directory.
 
-"Geometries" contains all 3D .geo files used for fenics calculations.
+2) CaCl2onlyPNP.py is used to calculate the CaCl2 ionic conductance in a 3D channel. The corresponding .geo file is "3D_channel.geo" in "Geometries" directory.
 
-"fenics_scripts" contains fenics scripts:
-
-  1) KClonlyPNP.py is used to calculate the KCl ionic conductance in a 3D single nanopre.
-     The corresponding .geo file is "3D_pore.geo" in "Geometries" directory.
-  2) CaCl2onlyPNP.py is used to calculate the CaCl2 ionic conductance in a 3D channel.
-     The corresponding .geo file is "3D_channel.geo" in "Geometries" directory.
-  3) CF_buffer.py is used to calculate the CF permeability in the hexgonal unit cell with buffers
-     The corresponding .geo file is "hexgonal.geo" in "Geometries" directory
+3) CF_buffer.py is used to calculate the CF permeability in the hexgonal unit cell with buffers. The corresponding .geo file is "hexgonal.geo" in "Geometries" directory.
 * Version
 
 ### How do I get set up? ###
@@ -74,3 +67,4 @@ All surface integrations in Paraview are accomplished fist by an "Slice" operati
 2) BS added all latest 3D .geo files in main directory
 
 3) BS added all latest fenics scripts in main directory
+
