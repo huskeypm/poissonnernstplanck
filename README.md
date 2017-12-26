@@ -14,12 +14,14 @@ Bin Sun added necessary files to reproduce data in the PNP paper
 * Quick summary
 Code in support of nanoporous paper
 
-1) KClonlyPNP.py is used to calculate the KCl ionic conductance in a 3D single nanopre. The corresponding .geo file is "3D_pore.geo" in "Geometries" directory.
+1) KClonlyPNP.py is used to calculate the KCl ionic conductance in a 3D single nanopre. The corresponding .geo file is "3D_pore.geo".
 
-2) CaCl2onlyPNP.py is used to calculate the CaCl2 ionic conductance in a 3D channel. The corresponding .geo file is "3D_channel.geo" in "Geometries" directory.
+2) CaCl2onlyPNP.py is used to calculate the CaCl2 ionic conductance in a 3D channel. The corresponding .geo file is "3D_channel.geo".
 
-3) CF_buffer.py is used to calculate the CF permeability in the hexgonal unit cell with buffers. The corresponding .geo file is "hexgonal.geo" in "Geometries" directory.
+3) CF_buffer.py is used to calculate the CF permeability in the hexgonal unit cell with buffers. The corresponding .geo file is "hexgonal.geo"
+
 * Version
+1.0
 
 ### How do I get set up? ###
 
@@ -41,7 +43,7 @@ mpirun -np 16 python KCl_CaCl_PNP.py 100 -30
 
 ** Data analysis in Paraview
 
-After each run, the flux density, concentration and electric potential data are stored in corresponding ".pvd" files,these files can be opened in Paraview.
+After each run, the flux density, concentration and electric potential data are stored in corresponding ".pvd" files, these files can be opened in Paraview.
 
 All surface integrations in Paraview are accomplished fist by an "Slice" operationa and then by the "Integrate Variables" filter.
 
