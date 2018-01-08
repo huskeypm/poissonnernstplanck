@@ -9,16 +9,23 @@ PKH copied over files from /home/AD/bsu233/labscripts/poissonnernstplanck
 12/23/2017
 Bin Sun added necessary files to reproduce data in the PNP paper
 
+01/08/2018
+Bin Sun added a simple 2D square example with KCl only in the system
+
 ### What is this repository for? ###
+To get familiar with the cold, start with the simple 2D case in "2D_Simple_example"
 
 * Quick summary
 Code in support of nanoporous paper
+
+Three fenics scripts in "3D_scripts" folder and the corresponding geometry files in "3D_geometries" folder:
 
 1) KClonlyPNP.py is used to calculate the KCl ionic conductance in a 3D single nanopre. The corresponding .geo file is "3D_pore.geo".
 
 2) CaCl2onlyPNP.py is used to calculate the CaCl2 ionic conductance in a 3D channel. The corresponding .geo file is "3D_channel.geo".
 
 3) CF_buffer.py is used to calculate the CF permeability in the hexgonal unit cell with buffers. The corresponding .geo file is "hexgonal.geo"
+
 
 * Version
 1.0
@@ -62,11 +69,4 @@ All surface integrations in Paraview are accomplished fist by an "Slice" operati
 * Repo owner or admin
 * Other community or team contact
 
-
-### Notes to PKH###
-1) the "pH-regulatesigma", the PNP.py and t1.geo are unnecessary.
-
-2) BS added all latest 3D .geo files in main directory
-
-3) BS added all latest fenics scripts in main directory
 
