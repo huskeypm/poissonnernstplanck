@@ -8,6 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import math
+import sys
+
+arg1=sys.argv[0]
+arg2=np.float(sys.argv[1]) # [KCl] concentration
+arg3=np.float(sys.argv[2]) # surface charge density at the bottom boarder of the domain
+
+print arg1, arg2, arg3
 
 
 #parameters 
@@ -17,12 +24,12 @@ nm=1e-9
 length = 40*nm # length of square domain
 
 #--------------------------------------------------
-cKCl = 150 #mol/m^3 == 1mM ----Bulk [KCl]
+cKCl = arg2 #mol/m^3 == 1mM ----Bulk [KCl]
 ck0 = cKCl #initial K+ concentration
 ccl0 = cKCl #initial Cl- concentration
 zk = 1 # K+ 
 zcl = -1 # Cl
-sigmaS = -0.02 # C/m^2
+sigmaS = arg3 # C/m^2
 Dk = 1.96e-9 # m^2/s --Diffusion constant for K+
 Dcl = 2.03e-9 # m^2/s  --Cl-
 
@@ -47,7 +54,7 @@ class topboundary(SubDomain):
 	def inside(self,x,on_boundary):
 		return near(x[1],length) and on_boundary
 
-meshfile = "/u1/bsu233/nanopores/2Dsimpledomain/test.xml"
+meshfile = "/net/share/bsu233/temp/2D_Simple_example/test.xml"
 mesh = Mesh(meshfile)
 subdomain = MeshFunction("size_t",mesh,1)
 subdomain.set_all(0)
@@ -129,6 +136,6 @@ v1file = File("ccl.pvd")
 v1file << ccl_u
 
 
-# save concentration of electric potential v
+# save electric potential v
 v1file = File("v.pvd")
 v1file << v_u

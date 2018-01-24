@@ -8,3 +8,4 @@ To run the test
 1) compile the geo file : gmsh -2 test.geo ; dolfin-convert test.msh test.xml
 2) change the path of test.xml in test.py: meshfile="/path_to_test.xml"
 3) run the script:  "python test.py 100 -0.02" where "100" means [KCl] = 100 mM, "-0.02" means surface charge density at the bottom boarder sigma = -0.02 C/m^2 
+
