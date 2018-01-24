@@ -9,3 +9,28 @@ To run the test
 2) change the path of test.xml in test.py: meshfile="/path_to_test.xml"
 3) run the script:  "python test.py 100 -0.02" where "100" means [KCl] = 100 mM, "-0.02" means surface charge density at the bottom boarder sigma = -0.02 C/m^2 
 
+
+
+
+           -----------------
+           |               |
+ ck=ck0 -> |               |<- ck=0
+ cl=cl0 -> |               |<-ccl=0
+           |               |
+           ----==========---
+            sigma=-0.02c/m^2
+
+y ^          
+  |
+  |----->
+        x
+      
+Instrction of calculated effective diffusion constant:
+1) After runing the test.py, you should get 5 pvd files ( use "ls -al *pvd" command to check)
+2) There 5 pvd files all can be loaded into Paraview (open Paraview --> File --> Open --> select pvd file -- click "Apply" or the eys sign to see result )
+3) To calculate effective diffusion constant of K+, first load "ck_flux.pvd" into Paraview:
+a) go to "Filters" --> "Data Analysis" --> "Plot Over Line" 
+b) at the left panel of Paraview, fill in the coordinations of the line. Point1(2e-8,0,0) Point2(2e-8,4e-8,0), then you will get a line at the middile of the domain
+c) click "Apply", go to the "Series Parameters", uncheck everything but "f-131_X", this will give you a graph of K+ flux in the x direction along the line you defined.
+d) accroding graph, calculate the average K+ flux in the X direction: Jk, then effective diffusion constant is Deff = Jk*length/ck0
+

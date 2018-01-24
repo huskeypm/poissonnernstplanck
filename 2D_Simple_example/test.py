@@ -48,11 +48,21 @@ charge = 1.60217e-19 #C --- electron charge
 
 class bottomboundary(SubDomain):
     def inside(self,x,on_boundary):
-        return near(x[1],0) and on_boundary
+        range = x[0] >= length*0.25 and x[0] <= length*0.75
+        return near(x[1],0) and range and on_boundary
 
 class topboundary(SubDomain):
 	def inside(self,x,on_boundary):
-		return near(x[1],length) and on_boundary
+                range = x[0] >= length*0.25 -DOLFIN_EPS and x[0] <= length*0.75 - DOLFIN_EPS
+		return near(x[1],length) and range and on_boundary
+
+class leftboundary(SubDomain):
+	def inside(self,x,on_boundary):
+		return near(x[0],0) and on_boundary
+
+class rightboundary(SubDomain):
+	def inside(self,x,on_boundary):
+		return near(x[0],length) and on_boundary
 
 meshfile = "/net/share/bsu233/temp/2D_Simple_example/test.xml"
 mesh = Mesh(meshfile)
@@ -61,15 +71,21 @@ subdomain.set_all(0)
 
 botboundary = bottomboundary()
 topboundary = topboundary()
+lboundary = leftboundary()
+rboundary = rightboundary()
 
 
 botboundary.mark(subdomain,1) #mark the boundary
 topboundary.mark(subdomain,2)
+lboundary.mark(subdomain,3)
+rboundary.mark(subdomain,4)
+
 
 
 
 #efine MixedFunctionSpace--
 #--- for dolfin 1.6.0 (grimm)
+P = FunctionSpace(mesh,"P",1)
 P1 = FunctionSpace(mesh,"P",1)
 P2 = FunctionSpace(mesh,"P",1)
 P3 = FunctionSpace(mesh,"P",1)
@@ -100,8 +116,11 @@ J = derivative(FF, u)
 
 #--------Boundary Conditions--------------------------
 #-- concentrations at the top boundary
-bc1 = DirichletBC(V.sub(0),ck0,subdomain,2)
-bc2 = DirichletBC(V.sub(1),ccl0,subdomain,2)
+bc1 = DirichletBC(V.sub(0),ck0,subdomain,3)
+bc11 = DirichletBC(V.sub(0),0,subdomain,4)
+
+bc2 = DirichletBC(V.sub(1),ccl0,subdomain,3)
+bc22 = DirichletBC(V.sub(1),0,subdomain,4)
 
 # Now most important: Surface charge density at bottom boundary
 #----------------------------------------------------------------
@@ -112,20 +131,52 @@ bc2 = DirichletBC(V.sub(1),ccl0,subdomain,2)
 phi0 = math.asinh((sigmaS/(0.117*(ck0/1000)**0.5)))*51.4/1000
 print phi0
 bcx = DirichletBC(V.sub(2),Constant(phi0),subdomain,1) # electric potential at the bottom
+bcx1 = DirichletBC(V.sub(2),0,subdomain,3) # electric potential at the bottom
+bcx2 = DirichletBC(V.sub(2),0,subdomain,4) # electric potential at the bottom
 
 
-bcc = [bc1,bc2,bcx]
+bcc = [bc1,bc11,bc2,bc22,bcx,bcx1,bcx2]
 
 #-------------------
 # Solve the problem
 #--------------------
 problem = NonlinearVariationalProblem(FF, u, bcs=bcc,J=J)
+#solver = NonlinearVariationalSolver(problem)
+c_low = Constant(0.0)
+c_up = Constant(3000.0)
+lower = Function(V)
+upper = Function(V)
+ninfty = Function(P) ; ninfty.vector()[:] = -np.infty
+pinfty = Function(P) ; pinfty.vector()[:] = np.infty
+fa = FunctionAssigner(V,[P,P,P])
+fa.assign(lower,[interpolate(c_low,P),interpolate(c_low,P),ninfty])
+fa.assign(upper,[interpolate(c_up,P),interpolate(c_up,P),pinfty])
+problem.set_bounds(lower,upper)
 solver = NonlinearVariationalSolver(problem)
-solver.parameters["newton_solver"]["linear_solver"] = "gmres"
+snes_solver_parameters = {"nonlinear_solver": "snes",
+                          "snes_solver": {"linear_solver": "lu",
+                                          "maximum_iterations": 20,
+                                          "report": True,
+                                          "error_on_nonconvergence": False}}
+
+solver.parameters.update(snes_solver_parameters)
+info(solver.parameters, True)
+
+(iter, converged) = solver.solve()
+
+
 #solver.parameters["newton_solver"]["preconditioner"] = "ilu"
-solver.solve()
+#solver.solve()
 
 ck_u,ccl_u,v_u = u.split(True) 
+
+TT = ck_u.function_space()
+degree = TT.ufl_element().degree()
+W = VectorFunctionSpace(mesh,'P',degree)
+fluxck = project(grad(ck_u)*Constant(-Dk),W)
+fluxccl = project(grad(ccl_u)*Constant(-Dcl),W)
+
+
 
 # save concentration of K+
 v1file = File("ck.pvd")
@@ -135,6 +186,12 @@ v1file << ck_u
 v1file = File("ccl.pvd")
 v1file << ccl_u
 
+#save K+ and Cl- flux
+v1file = File("ck_flux.pvd")
+v1file << fluxck
+
+v1file = File("cl_flux.pvd")
+v1file << fluxccl
 
 # save electric potential v
 v1file = File("v.pvd")
